@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Functions for the HQU Backend
+Resources:
+  TestDbFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: test_db_connection.handler
+      Runtime: python3.6
+      CodeUri: ./
+      Environment:
+        Variables:
+          DATABASE_HOST: _DATABASE_HOST
+          DATABASE_USER: _DATABASE_USER
+          DATABASE_PASSWORD: _DATABASE_PASSWORD
+          DATABASE_DB_NAME: _DATABASE_DB_NAME
+      FunctionName: TestDbConnection
+      Policies: AmazonRDSFullAccess
+      Events:
+        TestDbConnection:
+          Type: Api
+          Properties:
+            Path: /TestDbConnection
+            Method: GET
+  GetQuizScoreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: get_quiz_score.handler
+      Runtime: python3.6
+      CodeUri: ./
+      Policies: AmazonDynamoDBReadOnlyAccess
+      Events:
+        GetQuizScore:
+          Type: Api
+          Properties:
+            Path: /GetQuizScore
+            Method: GET
+  SaveQuestionResponseFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: save_question_response.handler
+      Runtime: python3.6
+      CodeUri: ./
+      Policies: AmazonDynamoDBFullAccess
+      Events:
+        SaveQuestionResponse:
+          Type: Api
+          Properties:
+            Path: /SaveQuestionResponse
+            Method: GET
+  StartNewQuizFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: start_new_quiz.handler
+      Runtime: python3.6
+      CodeUri: ./
+      Policies: AmazonDynamoDBFullAccess
+      Events:
+        StartNewQuiz:
+          Type: Api
+          Properties:
+            Path: /StartNewQuiz
+            Method: GET
