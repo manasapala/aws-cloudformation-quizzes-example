@@ -1,12 +1,5 @@
 {
   "Description": "HQniversity Trivia Assistant app template",  
-  "Mappings": {
-    "AWSRegionToAMI": {
-      "us-west-2": {
-        "AMI": "ami-32cf7b4a"
-      }
-    }
-  },
   "Resources": {
     "CodeBuildBucket" : {
         "Type" : "AWS::S3::Bucket",
