@@ -1,0 +1,146 @@
+Description: "Cloud Formation Template to set up HQU Code Pipeline for Lambda functions"
+Paramters:
+  StackName:
+    Name: StackPrefix 
+    Type: String
+    Description: 'Enter unique prefix identifier for this Stack'
+Resources:
+  CodeBuildBucket:
+    Type: AWS::S3::Bucket
+  CodeBuildRole:
+    Type: AWS::IAM::Role 
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Statement: 
+          -
+            Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal: 
+              Service: "codebuild.amazonaws.com"
+            Version: "2012-10-17"
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role 
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Statement: 
+          -
+            Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal: 
+              Service: "lambda.amazonaws.com"
+            Version: "2012-10-17"
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties: 
+      Name: !Sub ${StackPrefix}-codebuild-project
+      Description : 'Building the Lambda function zip files and putting them into the S3 bucket'
+      ServiceRole: !Ref CodeBuildRole
+      Source:
+        Type: 'CODEPIPELINE'
+        BuildSpec: 
+          !Sub |
+          version: 0.2
+          phases:
+            install:
+              commands:
+                - sudo apt-get update
+                - sudo apt-get --assume-yes install libmysqlclient18
+                - sudo apt-get --assume-yes install python3-pip
+                - sudo pip3 install 'mysql_connector_python<8.1' -t .
+                - sed -i 's/_DATABASE_HOST/${DATABASE_HOST}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_USER/${DATABASE_USER}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_PASSWORD/${DATABASE_PASSWORD}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_DB_NAME/${DATABASE_DB_NAME}/g' samTemplate.yaml
+                - aws cloudformation package --template-file samTemplate.yaml --s3-bucket ${StaticBucket} --output-template-file outputSamTemplate.yaml                         
+            artifacts:
+              type: zip
+                files:
+                  - samTemplate.yaml
+                  - outputSamTemplate.yaml
+      Environment:
+        Type: 'LINUX_CONTAINER'
+        ComputeType: 'BUILD_GENERAL1_SMALL'
+        Image: 'aws/codebuild/ubuntu-base:14.04'
+      Artifacts:
+        Type: 'CODEPIPELINE'
+      TimeoutInMinutes: 10
+    
+  CodePipelineProject:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: arn:aws:iam::187231954982:role/AWS-CodePipeline-Service
+      ArtifactStore: 
+        Type: S3 
+        Location: !Ref CodeBuildBucket
+      Stages:
+        -
+          Name: Source
+          Actions:
+            - 
+              Name: SourceAction 
+              ActionTypeId:
+                Category: Source 
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              OutputArtifacts:
+                Name: SourceOutput
+              Configuration:
+                Owner: 'matthew-trump'
+                Repo: 'hqu-trivia-api-backend'
+                Branch: 'master'
+                OAuthToken: 'c4a3523184478b2d51ba89d8c70551fbcf062fac'
+              RunOrder: 1
+        - 
+          Name: Build 
+          Actions: 
+            - 
+              Name: BuildAction 
+              ActionTypeId: 
+                Category: Build 
+                Owner: AWS 
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                Name: SourceOutput 
+              OutputArtifacts:
+                Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              RunOrder: 1 
+        - 
+          Name: Staging 
+          Actions: 
+            - 
+              Name: StagingAction 
+              ActionTypeId:
+                Category: Deploy 
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation 
+              Configuration:
+                ActionMode: 'CHANGE_SET_REPLACE'
+                StackName: !Sub ${StackPrefix}-Stack
+                ChangeSetName: !Sub ${StackPrefix}-ChangeSet
+                RoleArn: !GetAtt 'LambdaExecutionRole.Arn'
+                Capabilities: 'CAPABILITY_IAM'
+                TemplatePath: BuildOutput::outputSamTemplate.yaml
+              RunOrder: 1
+        - 
+          Name: Deploy 
+          Actions:
+            - 
+              Name: DeployAction 
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS 
+                Version: 1
+                Provider: CloudFormation 
+              Configuration: 
+                ActionMode: 'CHANGE_SET_EXECUTE'
+                StackName: !Sub ${StackPrefix}-Stack
+                ChangeSetName: !Sub ${StackPrefix}-ChangeSet
+              RunOrder: 1
+      
