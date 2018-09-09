@@ -91,6 +91,9 @@ Resources:
                 - sed -i 's/_DATABASE_USER/${DatabaseUser}/g' samTemplate.yaml
                 - sed -i 's/_DATABASE_PASSWORD/${DatabasePassword}/g' samTemplate.yaml
                 - sed -i 's/_DATABASE_DB_NAME/${DatabaseDBName}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_SUBNET_1/${DatabaseSubnet1}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_SUBNET_2/${DatabaseSubnet2}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_SECURITY_GROUP/${DatabaseSecurityGroup}/g' samTemplate.yaml
                 - aws cloudformation package --template-file samTemplate.yaml --s3-bucket ${StaticBucket} --output-template-file outputSamTemplate.yaml                         
             artifacts:
               type: zip
