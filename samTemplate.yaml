@@ -16,6 +16,12 @@ Resources:
           DATABASE_DB_NAME: _DATABASE_DB_NAME
       FunctionName: TestDbConnection
       Policies: AmazonRDSFullAccess
+      VpcConfig:
+         SubnetIds:
+           - 
+           -
+         SecurityGroups:
+           -
       Events:
         TestDbConnection:
           Type: Api
