@@ -1,12 +1,50 @@
 Description: "Cloud Formation Template to set up HQU Code Pipeline for Lambda functions"
-Paramters:
-  StackName:
-    Name: StackPrefix 
+Parameters: 
+  DatabaseHost: 
+    NoEcho: true
+    Description: Database host to which Lambda functions connect
     Type: String
-    Description: 'Enter unique prefix identifier for this Stack'
+  DatabaseUser: 
+    NoEcho: true
+    Description: Used by the Lambda functions to connect to the database
+    Type: String
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DatabasePassword: 
+    NoEcho: true
+    Description: Used by the Lambda functions to connect to the database
+    Type: String
+    MinLength: 1
+    MaxLength: 41
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: must contain only alphanumeric characters.
+  DatabaseDBName: 
+    NoEcho: true
+    Description: Database accessed by the Lambda functions
+    Type: String
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DatabaseVPC: 
+    Description: VPC of the Database instance
+    Type: "List<AWS::EC2::VPC::Id>"
+  DatabaseSubnet1: 
+    Description: Subnet of database instance
+    Type: "List<AWS::EC2::Subnet::Id>"
+  DatabaseSubnet2: 
+    Description: Subnet of database instance
+    Type: "List<AWS::EC2::Subnet::Id>"
+  DatabaseSecurityGroup: 
+    Description: Security group of database instance
+    Type: "List<AWS::EC2::SecurityGroup::Id>"
 Resources:
   CodeBuildBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      Name: !Sub ${AWS::StackName}-artifacts
   CodeBuildRole:
     Type: AWS::IAM::Role 
     Properties: 
@@ -34,7 +72,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties: 
-      Name: !Sub ${StackPrefix}-codebuild-project
+      Name: !Sub ${AWS::StackName}-codebuild-project
       Description : 'Building the Lambda function zip files and putting them into the S3 bucket'
       ServiceRole: !Ref CodeBuildRole
       Source:
@@ -49,10 +87,10 @@ Resources:
                 - sudo apt-get --assume-yes install libmysqlclient18
                 - sudo apt-get --assume-yes install python3-pip
                 - sudo pip3 install 'mysql_connector_python<8.1' -t .
-                - sed -i 's/_DATABASE_HOST/${DATABASE_HOST}/g' samTemplate.yaml
-                - sed -i 's/_DATABASE_USER/${DATABASE_USER}/g' samTemplate.yaml
-                - sed -i 's/_DATABASE_PASSWORD/${DATABASE_PASSWORD}/g' samTemplate.yaml
-                - sed -i 's/_DATABASE_DB_NAME/${DATABASE_DB_NAME}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_HOST/${DatabaseHost}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_USER/${DatabaseUser}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_PASSWORD/${DatabasePassword}/g' samTemplate.yaml
+                - sed -i 's/_DATABASE_DB_NAME/${DatabaseDBName}/g' samTemplate.yaml
                 - aws cloudformation package --template-file samTemplate.yaml --s3-bucket ${StaticBucket} --output-template-file outputSamTemplate.yaml                         
             artifacts:
               type: zip
@@ -122,8 +160,8 @@ Resources:
                 Provider: CloudFormation 
               Configuration:
                 ActionMode: 'CHANGE_SET_REPLACE'
-                StackName: !Sub ${StackPrefix}-Stack
-                ChangeSetName: !Sub ${StackPrefix}-ChangeSet
+                StackName: !Sub ${AWS::StackName}-Lambda-Stack
+                ChangeSetName: !Sub ${AWS::StackName}-Lambda-ChangeSet
                 RoleArn: !GetAtt 'LambdaExecutionRole.Arn'
                 Capabilities: 'CAPABILITY_IAM'
                 TemplatePath: BuildOutput::outputSamTemplate.yaml
@@ -140,7 +178,8 @@ Resources:
                 Provider: CloudFormation 
               Configuration: 
                 ActionMode: 'CHANGE_SET_EXECUTE'
-                StackName: !Sub ${StackPrefix}-Stack
-                ChangeSetName: !Sub ${StackPrefix}-ChangeSet
+                StackName: !Sub ${AWS::StackName}-Lambda-Stack
+                ChangeSetName: !Sub ${AWS::StackName}-Lambda-ChangeSet
               RunOrder: 1
+      
       
