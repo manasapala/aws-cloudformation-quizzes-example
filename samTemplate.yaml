@@ -18,10 +18,10 @@ Resources:
       Policies: AmazonRDSFullAccess
       VpcConfig:
          SubnetIds:
-           - 
-           -
+           - _DATABASE_SUBNET_1
+           - _DATABASE_SUBNET_2
          SecurityGroups:
-           -
+           - _DATABASE_SECURITY_GROUP
       Events:
         TestDbConnection:
           Type: Api
