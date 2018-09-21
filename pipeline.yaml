@@ -129,10 +129,10 @@ Resources:
               OutputArtifacts:
                 Name: SourceOutput
               Configuration:
-                Owner: 'matthew-trump'
+                Owner: 'devbrigade'
                 Repo: 'hqu-trivia-api-backend'
                 Branch: 'master'
-                OAuthToken: 'c4a3523184478b2d51ba89d8c70551fbcf062fac'
+                OAuthToken: '9450c2d7446dd611093a3086dfff747f0c428534'
               RunOrder: 1
         - 
           Name: Build 
