@@ -130,7 +130,7 @@ Resources:
                 Name: SourceOutput
               Configuration:
                 Owner: 'devbrigade'
-                Repo: 'hqu-trivia-api-backend'
+                Repo: 'hq-lambda-api-python'
                 Branch: 'master'
                 OAuthToken: '9450c2d7446dd611093a3086dfff747f0c428534'
               RunOrder: 1
