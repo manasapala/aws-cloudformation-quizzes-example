@@ -1,4 +1,4 @@
-AWS CloudFormation Quizzes Example
+#AWS CloudFormation Quizzes Example
 
 This repo contains the AWS CloudFormation templates and supporting files that were used to test the building the backend stack for the a commercial trivia app (Fall 2018) within Amazon Web Services (the code was not deployed and delivered to the client because we ultimately went with Google Cloud Platform for project reasons).
 
