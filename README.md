@@ -1,6 +1,6 @@
-# HQ CloudFormation Templates
+AWS CloudFormation Quizzes Example
 
-This repo contains the AWS CloudFormation templates and supporting files that can be used to the build the backend stack for the HQ Trivia app (Fall 2018) within Amazon Web Services. 
+This repo contains the AWS CloudFormation templates and supporting files that were used to test the building the backend stack for the a commercial trivia app (Fall 2018) within Amazon Web Services (the code was not deployed and delivered to the client because we ultimately went with Google Cloud Platform for project reasons).
 
 ## Usage
 
